@@ -1,6 +1,10 @@
 #include <stdint.h>
 #include "display.h"
 #include "timer.h"
+#include "gpio.h"
+
+#define VOL_KEY_GPIO   127   // bias-pull-up → LOW when pressed
+#define HOME_KEY_GPIO  128   // no pull → check hardware
 
 void main(void *dtb, void *kernel) {
 	watchdog_disable();
@@ -10,6 +14,31 @@ void main(void *dtb, void *kernel) {
     // clear to white
     for (int i = 0; i < FB_WIDTH * FB_HEIGHT * FB_BPP; i++)
         fb[i] = 0x00;
+
+    draw_string(fb, 10, 10, "GPIO button test", 255, 255, 255, 0, 0, 0);
+
+    // Configure buttons as inputs
+    // Vol key: pull-up, 2mA (matches DTS: bias-pull-up, drive-strength=2)
+    gpio_config_input(VOL_KEY_GPIO,  GPIO_PULL_UP, GPIO_DRV_2MA);
+    // Home key: no pull, 2mA (matches DTS: bias-disable, drive-strength=2)
+    gpio_config_input(HOME_KEY_GPIO, GPIO_PULL_NONE, GPIO_DRV_2MA);
+
+    while (1) {
+        int vol  = gpio_read(VOL_KEY_GPIO);   // 0 = pressed (pull-up, active low)
+        int home = gpio_read(HOME_KEY_GPIO);  // depends on your hardware wiring
+
+        if (!vol)
+            draw_string(fb, 10, 40, "VOL pressed! ", 255, 255, 0, 0, 0, 0);
+        else
+            draw_string(fb, 10, 40, "VOL released ", 255, 255, 255, 0, 0, 0);
+
+        if (!home)
+            draw_string(fb, 10, 80, "HOME pressed!", 0, 255, 0, 0, 0, 0);
+        else
+            draw_string(fb, 10, 80, "HOME released", 255, 255, 255, 0, 0, 0);
+
+        hal_delay_ms(50);  // debounce
+    }
 
 	draw_string(fb, 10, 10, "Hello World from j2y18lte", 255, 255, 255, 0, 0, 0);
 
