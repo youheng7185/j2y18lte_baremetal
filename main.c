@@ -1,33 +1,39 @@
-extern void boot_kernel(void* dtb, void* x1, void* x2, void* x3, void* kernel);
+#define FB_BASE     0xA8000000
+#define FB_WIDTH    540
+#define FB_HEIGHT   960
 
-void memcpy(void *dest, void *src, int size)
-{
-	//128-bit memcpy to speed up boot process.
-	unsigned __int128 *src2 = src;
-	unsigned __int128 *dest2 = dest;
+typedef unsigned int uint32_t;
 
-	for (int i=0; i<size/16; i++)
-		dest2[i] = src2[i];
+#define FB_BPP      3
+
+static void fill_rect(unsigned char *fb, int x, int y, int w, int h, 
+                      unsigned char r, unsigned char g, unsigned char b) {
+    for (int row = y; row < y + h; row++) {
+        for (int col = x; col < x + w; col++) {
+            int offset = (row * FB_WIDTH + col) * FB_BPP;
+            fb[offset + 0] = r;
+            fb[offset + 1] = g;
+            fb[offset + 2] = b;
+        }
+    }
 }
 
-#ifdef POWER_KEY_BOOT
-void wait_for_power_key() {
-	//0x11CB0064: gpa1 pins
-	//32: vol up
-	//64: vol down
-	//128: power
-	//This is true for all known Exynos 7885 devices.
-	char value;
-	do {
-		value = *((char*)0x11CB0064);
-	} while (value & 128);
-}
-#endif
+void main(void *dtb, void *kernel) {
+    unsigned char *fb = (unsigned char *)FB_BASE;
 
-void main(void* dtb, void* kernel) {
-#ifdef POWER_KEY_BOOT
-	wait_for_power_key();
-#endif
-	memcpy((void*)0x90000000, kernel, 0x2000000);
-	boot_kernel(dtb, 0, 0, 0, (void*)0x90000000);
+    // clear to black
+    for (int i = 0; i < FB_WIDTH * FB_HEIGHT * FB_BPP; i++)
+        fb[i] = 0;
+
+    fill_rect(fb,   0,   0, 180, 320, 255,   0,   0); // red
+    fill_rect(fb, 180,   0, 180, 320,   0, 255,   0); // green
+    fill_rect(fb, 360,   0, 180, 320,   0,   0, 255); // blue
+    fill_rect(fb,   0, 320, 180, 320, 255, 255,   0); // yellow
+    fill_rect(fb, 180, 320, 180, 320,   0, 255, 255); // cyan
+    fill_rect(fb, 360, 320, 180, 320, 255,   0, 255); // magenta
+    fill_rect(fb,   0, 640, 180, 320, 255, 255, 255); // white
+    fill_rect(fb, 180, 640, 180, 320, 128, 128, 128); // gray
+    fill_rect(fb, 360, 640, 180, 320,  64,  64,  64); // dark gray
+
+    while(1);
 }

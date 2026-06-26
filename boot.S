@@ -1,7 +1,4 @@
-    adr	x0, dtb
-    adr	x1, kernel
+.text
+.global _start
+_start:
     b main
-
-.global boot_kernel
-boot_kernel:
-    br	x4
