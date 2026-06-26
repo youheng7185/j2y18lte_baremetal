@@ -1,9 +1,7 @@
 #define FB_BASE     0xA8000000
-#define FB_WIDTH    540
+#define FB_WIDTH    540     // visible pixels per row (panel resolution)
 #define FB_HEIGHT   960
-
-typedef unsigned int uint32_t;
-
+#define FB_STRIDE   1080    // physical scanline width in pixels (from memory size)
 #define FB_BPP      3
 
 __attribute__((noinline))
@@ -11,7 +9,8 @@ static void fill_rect(unsigned char *fb,
                       unsigned int x,  unsigned int y,
                       unsigned int w,  unsigned int h,
                       unsigned char r, unsigned char g, unsigned char b) {
-    unsigned char *row_ptr = fb + y * (FB_WIDTH * FB_BPP);
+    x = x + 286;
+	unsigned char *row_ptr = fb + y * (FB_WIDTH * FB_BPP);
     for (unsigned int row = 0; row < h; row++) {
         unsigned char *px = row_ptr + x * FB_BPP;
         for (unsigned int col = 0; col < w; col++) {
