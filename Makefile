@@ -1,4 +1,4 @@
-CCPREFIX ?= arm-linux-gnueabi-
+CCPREFIX ?= aarch64-linux-gnu-
 CC     = $(CCPREFIX)gcc
 LD     = $(CCPREFIX)ld
 OBJCPY = $(CCPREFIX)objcopy
