@@ -80,6 +80,24 @@ static void watchdog_kick(void) {
     WDT_RST = 1;
 }
 
+#define QTIMER_FREQ_HZ  19200000ULL
+
+static inline unsigned long long read_cntpct(void) {
+    unsigned long long val;
+    __asm__ volatile ("mrs %0, cntpct_el0" : "=r"(val));
+    return val;
+}
+
+unsigned int hal_gettick_ms(void) {
+    return (unsigned int)(read_cntpct() / (QTIMER_FREQ_HZ / 1000));
+}
+
+void hal_delay_ms(unsigned int ms) {
+    unsigned long long start = read_cntpct();
+    unsigned long long ticks = (unsigned long long)ms * (QTIMER_FREQ_HZ / 1000);
+    while ((read_cntpct() - start) < ticks);
+}
+
 void main(void *dtb, void *kernel) {
 	watchdog_disable();
 
@@ -101,7 +119,21 @@ void main(void *dtb, void *kernel) {
     // fill_rect(fb, 180, 640, 180, 320, 128, 128, 128); // gray
     // fill_rect(fb, 360, 640, 180, 320,  64,  64,  64); // dark gray
 
+    hal_delay_ms(1000);
+
+    // clear once
+    for (int i = 0; i < FB_WIDTH * FB_HEIGHT * FB_BPP; i++)
+        fb[i] = 0x00;
+
+    uint8_t count = 0;
+
     while(1) {
-        watchdog_kick(); // if disable doesn't work, kick it in the loop
+        if (count % 2 == 0) {
+            draw_string(fb, 10, 50, "tick even!", 255, 255, 255, 0, 0, 0);
+        } else {
+            draw_string(fb, 10, 50, "tick odd!", 255, 255, 255, 0, 0, 0);
+        }
+        count++;
+        hal_delay_ms(1000);
     }
 }
