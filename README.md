@@ -1,3 +1,10 @@
+# j2y18lte baremetal
+
+```
+./build.sh
+```
+to compile and pack boot.img
+
 # Minimal S-Boot Wrapper
 This small wrapper is designed to help booting Mainline Linux on
 devices using Samsung S-Boot bootloader, especially Exynos7885 phones.
