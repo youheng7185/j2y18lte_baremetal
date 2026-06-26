@@ -6,15 +6,21 @@ typedef unsigned int uint32_t;
 
 #define FB_BPP      3
 
-static void fill_rect(unsigned char *fb, int x, int y, int w, int h, 
+__attribute__((noinline))
+static void fill_rect(unsigned char *fb,
+                      unsigned int x,  unsigned int y,
+                      unsigned int w,  unsigned int h,
                       unsigned char r, unsigned char g, unsigned char b) {
-    for (int row = y; row < y + h; row++) {
-        for (int col = x; col < x + w; col++) {
-            int offset = (row * FB_WIDTH + col) * FB_BPP;
-            fb[offset + 0] = r;
-            fb[offset + 1] = g;
-            fb[offset + 2] = b;
+    unsigned char *row_ptr = fb + y * (FB_WIDTH * FB_BPP);
+    for (unsigned int row = 0; row < h; row++) {
+        unsigned char *px = row_ptr + x * FB_BPP;
+        for (unsigned int col = 0; col < w; col++) {
+            px[0] = r;
+            px[1] = g;
+            px[2] = b;
+            px += FB_BPP;
         }
+        row_ptr += FB_WIDTH * FB_BPP;
     }
 }
 
@@ -35,19 +41,19 @@ void main(void *dtb, void *kernel) {
 
     unsigned char *fb = (unsigned char *)FB_BASE;
 
-    // clear to black
+    // clear to white
     for (int i = 0; i < FB_WIDTH * FB_HEIGHT * FB_BPP; i++)
         fb[i] = 0xAA;
 
-    // fill_rect(fb,   0,   0, 180, 320, 255,   0,   0); // red
-    // fill_rect(fb, 180,   0, 180, 320,   0, 255,   0); // green
-    // fill_rect(fb, 360,   0, 180, 320,   0,   0, 255); // blue
+	fill_rect(fb,   0,   0, 180, 320, 255,   0,   0); // red
+    fill_rect(fb, 180,   0, 180, 320,   0, 255,   0); // green
+    fill_rect(fb, 360,   0, 180, 320,   0,   0, 255); // blue
     fill_rect(fb,   0, 320, 180, 320, 255, 255,   0); // yellow
-    // fill_rect(fb, 180, 320, 180, 320,   0, 255, 255); // cyan
-    // fill_rect(fb, 360, 320, 180, 320, 255,   0, 255); // magenta
-    // fill_rect(fb,   0, 640, 180, 320, 255, 255, 255); // white
-    // fill_rect(fb, 180, 640, 180, 320, 128, 128, 128); // gray
-    // fill_rect(fb, 360, 640, 180, 320,  64,  64,  64); // dark gray
+    fill_rect(fb, 180, 320, 180, 320,   0, 255, 255); // cyan
+    fill_rect(fb, 360, 320, 180, 320, 255,   0, 255); // magenta
+    fill_rect(fb,   0, 640, 180, 320, 255, 255, 255); // white
+    fill_rect(fb, 180, 640, 180, 320, 128, 128, 128); // gray
+    fill_rect(fb, 360, 640, 180, 320,  64,  64,  64); // dark gray
 
     while(1) {
         watchdog_kick(); // if disable doesn't work, kick it in the loop

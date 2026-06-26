@@ -14,7 +14,20 @@ _start:
     .long   0
 
 real_start:
-    /* set up stack pointer, use safe area in DRAM below our load address */
-    ldr     x30, =0x80070000
-    mov     sp, x30
-    b       main
+    /* load stack from linker symbol, not hardcoded address */
+    ldr     x1, =stack_top
+    and     x1, x1, #~15
+    mov     sp, x1
+
+    /* clear bss */
+    ldr     x1, =bss_start
+    ldr     x2, =bss_end
+bss_loop:
+    cmp     x1, x2
+    b.hs    done_bss
+    stp     xzr, xzr, [x1], #16
+    b       bss_loop
+done_bss:
+    bl      main
+hang:
+    b       hang
