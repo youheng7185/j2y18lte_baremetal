@@ -5,6 +5,7 @@
 
 #define VOL_KEY_GPIO   127   // bias-pull-up → LOW when pressed
 #define HOME_KEY_GPIO  128   // no pull → check hardware
+#define TORCH_GPIO     34    // cam_flash TORCH
 
 void main(void *dtb, void *kernel) {
 	watchdog_disable();
@@ -22,20 +23,31 @@ void main(void *dtb, void *kernel) {
     gpio_config_input(VOL_KEY_GPIO,  GPIO_PULL_UP, GPIO_DRV_2MA);
     // Home key: no pull, 2mA (matches DTS: bias-disable, drive-strength=2)
     gpio_config_input(HOME_KEY_GPIO, GPIO_PULL_NONE, GPIO_DRV_2MA);
+    gpio_config_output(TORCH_GPIO, GPIO_PULL_DOWN, GPIO_DRV_2MA);
+
+    int torch_state = 0;
+    int last_vol  = 1;
 
     while (1) {
         int vol  = gpio_read(VOL_KEY_GPIO);   // 0 = pressed (pull-up, active low)
         int home = gpio_read(HOME_KEY_GPIO);  // depends on your hardware wiring
 
-        if (!vol)
-            draw_string(fb, 10, 40, "VOL pressed! ", 255, 255, 0, 0, 0, 0);
-        else
-            draw_string(fb, 10, 40, "VOL released ", 255, 255, 255, 0, 0, 0);
+        if (last_vol == 1 && vol == 0) {
+            torch_state ^= 1;
+            gpio_write(TORCH_GPIO, torch_state);
+
+            if (torch_state)
+                draw_string(fb, 10, 40, "volume pressed TORCH ON ", 255, 255, 0, 0, 0, 0);
+            else
+                draw_string(fb, 10, 40, "volume released TORCH OFF", 255, 255, 255, 0, 0, 0);
+        }
 
         if (!home)
             draw_string(fb, 10, 80, "HOME pressed!", 0, 255, 0, 0, 0, 0);
         else
             draw_string(fb, 10, 80, "HOME released", 255, 255, 255, 0, 0, 0);
+
+        last_vol  = vol;
 
         hal_delay_ms(50);  // debounce
     }

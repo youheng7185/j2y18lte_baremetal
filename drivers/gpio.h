@@ -37,4 +37,14 @@ static inline int gpio_read(uint32_t pin) {
     return (GPIO_IN_OUT(pin) & GPIO_IN_BIT) ? 1 : 0;
 }
 
+static inline void gpio_config_output(uint32_t pin, uint32_t pull, uint32_t drv) {
+    // First set the output value to 0 before enabling OE to avoid glitch
+    GPIO_IN_OUT(pin) = 0;
+    GPIO_CFG(pin) = GPIO_FUNC_GPIO | pull | drv | GPIO_OE_OUTPUT;
+}
+
+static inline void gpio_write(uint32_t pin, int value) {
+    GPIO_IN_OUT(pin) = value ? GPIO_OUT_BIT : 0;
+}
+
 #endif
