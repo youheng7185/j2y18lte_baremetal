@@ -24,9 +24,10 @@ CFLAGS = \
 	-fno-PIE \
 	-fno-pie \
 	-march=armv8-a \
+	-Idrivers \
 	-O2
 
-OBJ = boot.o main.o
+OBJ = boot.o main.o drivers/display.o drivers/font.o drivers/timer.o
 
 wrapped_kernel: wrapper.elf
 	$(OBJCPY) -O binary $< $@
@@ -41,4 +42,4 @@ wrapper.elf: $(OBJ) linker.lds
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f *.o wrapper.elf wrapped_kernel
+	rm -f *.o drivers/*.o wrapper.elf wrapped_kernel
