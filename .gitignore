@@ -1,7 +1,6 @@
 kernel
 dtb
 *.o
-linker.lds
 wrapped_kernel
 cmdline_value
 defs_value
