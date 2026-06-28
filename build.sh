@@ -9,7 +9,9 @@ echo "==> Cleaning..."
 make clean
 
 echo "==> Building..."
-make
+#make
+make CMDLINE="clk_ignore_unused" KERNEL_PATH=/home/lapchong/arm_mpu/phones/bootloader/j2y18lte_baremetal/1/Image DTB_PATH=/home/lapchong/arm_mpu/phones/bootloader/j2y18lte_baremetal/1/msm8917-samsung-j2y18lte.dtb
+make wrapped_kernel
 
 echo "==> Packing boot.img..."
 $MKBOOTIMG \
