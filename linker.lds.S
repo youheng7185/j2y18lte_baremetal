@@ -32,4 +32,10 @@ SECTIONS
         kernel = .;
         *(.kernel)
     }
+
+    .initramfs ALIGN(0x1000) : {
+        initramfs = .;
+        *(.initramfs)
+        initramfs_end = .;
+    }
 }

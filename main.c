@@ -7,6 +7,14 @@
 #define HOME_KEY_GPIO  128   // no pull → check hardware
 #define TORCH_GPIO     34    // cam_flash TORCH
 
+extern char dtb[];
+extern char kernel[];
+extern char initramfs[];
+extern char initramfs_end[];
+
+#define INITRD_START 0x82000000
+#define INITRD_END   0x823d87bb
+
 void boot_kernel(void *dtb, int a1, int a2, int a3, void *entry);
 
 static void memcpy_(void *dst, const void *src, unsigned long n)
@@ -18,6 +26,11 @@ static void memcpy_(void *dst, const void *src, unsigned long n)
 
 void main(void *dtb, void *kernel)
 {
+    unsigned long rd_size = (unsigned long)(initramfs_end - initramfs);
+
+    /* copy initramfs to where bootloader would normally place it */
+    memcpy_((void *)0x82000000, initramfs, rd_size);
+
     /* copy kernel image to its expected load address */
     memcpy_((void *)0x90000000, kernel, 0x2000000);
 

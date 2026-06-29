@@ -1,6 +1,6 @@
 KERNEL_PATH ?= /home/lapchong/arm_mpu/phones/bootloader/j2y18lte_baremetal/1/Image
 DTB_PATH    ?= /home/lapchong/arm_mpu/phones/bootloader/j2y18lte_baremetal/1/msm8917-samsung-j2y18lte.dtb
-CMDLINE     ?= clk_ignore_unused
+CMDLINE     ?= clk_ignore_unused ignore_loglevel earlyprintk rdinit=/init
 
 CCPREFIX ?= aarch64-linux-gnu-
 CC     = $(CCPREFIX)gcc
@@ -44,7 +44,7 @@ dtb.o: tmp.dtb
 	    --redefine-sym _binary_tmp_dtb_start=dtb \
 	    $< $@
 
-OBJ = boot.o main.o drivers/display.o drivers/font.o drivers/timer.o kernel.o dtb.o
+OBJ = boot.o main.o drivers/display.o drivers/font.o drivers/timer.o kernel.o dtb.o initramfs.o
 
 wrapped_kernel: wrapper.elf
 	$(OBJCPY) -O binary $< $@
@@ -64,9 +64,13 @@ linker.lds: linker.lds.S
 
 # Patch the DTB with the kernel cmdline and initrd address range,
 # then repack it as a binary DTB blob
+RAMDISK_START ?= 0x82000000   # 0x80000000 + 0x02000000
+
 tmp.dtb: $(DTB_PATH) cmdline_value
+	$(eval RDSIZE := $(shell wc -c < initramfs.cpio.gz))
+	$(eval RDEND  := $(shell printf '0x%X' $$(($(RAMDISK_START) + $(RDSIZE)))))
 	( dtc -O dts $(DTB_PATH) && \
-	  echo '/ { chosen { bootargs = "$(CMDLINE)"; linux,initrd-start = <0x89000000>; linux,initrd-end = <0x890FFFFF>; }; };' \
+	  echo '/ { chosen { bootargs = "$(CMDLINE)"; linux,initrd-start = <0x82000000>; linux,initrd-end = <$(RDEND)>; }; };' \
 	) | dtc -O dtb -o $@
 
 # Sentinel file — rebuilds tmp.dtb only when CMDLINE actually changes
@@ -74,6 +78,13 @@ cmdline_value:
 	@echo $(CMDLINE) > cmdline.tmp
 	@diff -q cmdline_value cmdline.tmp 2>/dev/null || cp cmdline.tmp cmdline_value
 	@rm cmdline.tmp
+
+initramfs.o: initramfs.cpio.gz
+	$(OBJCPY) -I binary -O elf64-littleaarch64 -B aarch64 \
+	    --rename-section .data=.initramfs \
+	    --redefine-sym _binary_initramfs_cpio_gz_start=initramfs \
+	    --redefine-sym _binary_initramfs_cpio_gz_end=initramfs_end \
+	    $< $@
 
 clean:
 	rm -f *.o drivers/*.o wrapper.elf wrapped_kernel linker.lds tmp.dtb cmdline_value

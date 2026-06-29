@@ -5,3 +5,5 @@ wrapped_kernel
 cmdline_value
 defs_value
 tmp.dtb
+initramfs_root/
+initramfs.cpio.gz
