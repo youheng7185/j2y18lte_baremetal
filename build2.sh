@@ -9,9 +9,12 @@ make clean
 
 echo "==> Building wrapped_kernel..."
 make wrapped_kernel \
-CMDLINE="clk_ignore_unused ignore_loglevel earlyprintk rdinit=/bin/sh" \
+CMDLINE="clk_ignore_unused pd_ignore_unused ignore_loglevel earlyprintk rdinit=/init deferred_probe_timeout=600" \
 KERNEL_PATH=/home/lapchong/arm_mpu/phones/bootloader/j2y18lte_baremetal/1/Image \
 DTB_PATH=/home/lapchong/arm_mpu/phones/bootloader/j2y18lte_baremetal/1/msm8917-samsung-j2y18lte.dtb
+
+rm -rf initramfs.cpio.gz
+cp busybox/initramfs.cpio.gz initramfs.cpio.gz
 
 echo "==> Packing boot.img..."
 $MKBOOTIMG \
