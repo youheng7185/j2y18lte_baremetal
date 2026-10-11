@@ -7,3 +7,5 @@ defs_value
 tmp.dtb
 initramfs_root/
 initramfs.cpio.gz
+busybox/initramfs_root
+busybox/initramfs.cpio.gz
