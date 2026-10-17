@@ -31,6 +31,7 @@ SECTIONS
     .kernel ALIGN(0x1000) : {
         kernel = .;
         *(.kernel)
+        kernel_end = .;
     }
 
     .initramfs ALIGN(0x1000) : {

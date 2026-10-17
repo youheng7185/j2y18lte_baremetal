@@ -9,3 +9,19 @@ initramfs_root/
 initramfs.cpio.gz
 busybox/initramfs_root
 busybox/initramfs.cpio.gz
+
+# Local rootfs builds and firmware staging
+/debian-rootfs/
+/phosh-rootfs/
+/wcnss-firmware-reference/
+
+# Generated wrapper / boot artifacts and downloaded rootfs archives
+/linker.lds
+/wrapper.elf
+/u-boot-msm8917.Image
+/busybox-armv8l
+/alpine-minirootfs-*.tar.gz*
+/postmarketos-*.cpio.gz
+/boot.img
+/1/Image
+/1/*.dtb

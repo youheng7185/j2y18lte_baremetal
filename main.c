@@ -9,11 +9,46 @@
 
 extern char dtb[];
 extern char kernel[];
+extern char kernel_end[];
 extern char initramfs[];
 extern char initramfs_end[];
 
 #define INITRD_START 0x82000000
 #define INITRD_END   0x823d87bb
+
+/* Visible marker proving the wrapper reached main(), before the U-Boot handoff. */
+#define FB_MARKER_BASE   0xA800035AUL
+#define FB_MARKER_STRIDE 1620
+
+static void draw_wrapper_marker(void)
+{
+	volatile unsigned char *fb = (volatile unsigned char *)FB_MARKER_BASE;
+	unsigned long start = FB_MARKER_BASE + 900 * FB_MARKER_STRIDE;
+	unsigned long end = FB_MARKER_BASE + 960 * FB_MARKER_STRIDE;
+	unsigned int x, y;
+
+	/* Two broad bands along the bottom edge: yellow and cyan. */
+	for (y = 900; y < 960; y++) {
+		volatile unsigned char *pixel = fb + y * FB_MARKER_STRIDE;
+
+		for (x = 0; x < 540; x++) {
+			if (x < 270) {
+				*pixel++ = 0xff;
+				*pixel++ = 0xff;
+				*pixel++ = 0x00;
+			} else {
+				*pixel++ = 0x00;
+				*pixel++ = 0xff;
+				*pixel++ = 0xff;
+			}
+		}
+	}
+
+	/* Make the marker visible to the display controller if this RAM is cached. */
+	for (unsigned long line = start & ~63UL; line < end; line += 64)
+		__asm__ volatile("dc cvac, %0" : : "r"(line) : "memory");
+	__asm__ volatile("dsb sy" : : : "memory");
+}
 
 void boot_kernel(void *dtb, int a1, int a2, int a3, void *entry);
 
@@ -28,11 +63,14 @@ void main(void *dtb, void *kernel)
 {
     unsigned long rd_size = (unsigned long)(initramfs_end - initramfs);
 
+	draw_wrapper_marker();
+
     /* copy initramfs to where bootloader would normally place it */
     memcpy_((void *)0x82000000, initramfs, rd_size);
 
-    /* copy kernel image to its expected load address */
-    memcpy_((void *)0x90000000, kernel, 0x2000000);
+    /* copy only the embedded Image bytes to its expected load address */
+    unsigned long kernel_size = (unsigned long)((char *)kernel_end - (char *)kernel);
+    memcpy_((void *)0x90000000, kernel, kernel_size);
 
     /* hand off: x0=dtb, x1=0, x2=0, x3=0, x4=entry */
     boot_kernel(dtb, 0, 0, 0, (void *)0x90000000);

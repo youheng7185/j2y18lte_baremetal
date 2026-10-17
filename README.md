@@ -34,3 +34,34 @@ Example command:
 The resulting "wrapped_kernel" can be used instead of a kernel in a
 boot.img to be flashed onto an S-Boot device. Providing a seperate
 dtb in the boot image is not neccessary.
+
+
+## J2 U-Boot handoff build
+
+`build3.sh` packages the wrapper around `u-boot-msm8917.Image`. It takes
+`KERNEL_PATH`, `DTB_PATH`, `DT`, `MKBOOTIMG`, and `CMDLINE` from the environment
+and uses repository-relative defaults. Provide `initramfs.cpio.gz` in this
+folder before building; the Makefile embeds that filename. Build with:
+
+```sh
+bash ./build3.sh
+```
+
+This creates `boot.img` without flashing it. The optional `--flash` argument
+actually runs `fastboot boot boot.img`, for temporary booting on a compatible
+fastboot setup. Retain the original Samsung DT table expected by the wrapper.
+
+The wrapper copies the actual embedded image size (bounded by `kernel_end`)
+to the U-Boot load address rather than reading a fixed 32 MiB. It draws yellow
+and cyan bands at the bottom of the J2 framebuffer before handing off.
+
+Kernel: https://github.com/youheng7185/linux_j2y18lte/tree/msm89x7/7.1.3
+
+U-Boot: https://github.com/youheng7185/u-boot
+
+Debian XFCE rootfs, Samsung WCNSS firmware and SD installation guide:
+https://github.com/youheng7185/mainline_linux_j2y18lte
+
+Rootfs directories and generated images are local build inputs/outputs;
+they are not part of this source update. Historically tracked binary files
+are left untouched by this commit.
